@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HAMZA SKU - Setup</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a0e1a, #1a1e2e);
+            color: #e0e6ed;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container { max-width: 900px; margin: 0 auto; }
+        h1 {
+            text-align: center;
+            color: #00ff88;
+            font-size: 36px;
+            margin-bottom: 30px;
+            text-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
+        }
+        .card {
+            background: rgba(20, 24, 36, 0.95);
+            border: 2px solid rgba(0, 255, 136, 0.3);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            color: #00ff88;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        input, select {
+            width: 100%;
+            padding: 12px;
+            background: rgba(10, 14, 26, 0.8);
+            border: 2px solid rgba(0, 255, 136, 0.3);
+            border-radius: 10px;
+            color: #e0e6ed;
+            font-size: 14px;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: #00ff88;
+        }
+        .btn {
+            padding: 12px 30px;
+            margin: 5px;
+            border: none;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .btn-start {
+            background: linear-gradient(135deg, #00ff88, #00cc66);
+            color: #0a0e1a;
+        }
+        .btn-stop {
+            background: linear-gradient(135deg, #ff0055, #cc0044);
+            color: white;
+        }
+        .btn:hover { transform: translateY(-2px); }
+        .status {
+            padding: 15px;
+            background: rgba(0, 255, 136, 0.1);
+            border: 1px solid rgba(0, 255, 136, 0.3);
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        .status-line {
+            display: flex;
+            justify-content: space-between;
+            margin: 5px 0;
+        }
+        .alert {
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        .alert.show { display: block; }
+        .alert-success { background: rgba(0, 255, 136, 0.2); border: 1px solid #00ff88; color: #00ff88; }
+        .alert-error { background: rgba(255, 0, 85, 0.2); border: 1px solid #ff0055; color: #ff0055; }
+        .btn-dashboard {
+            display: block;
+            width: 100%;
+            margin-top: 20px;
+            background: linear-gradient(135deg, #0088ff, #0066cc);
+            color: white;
+            text-align: center;
+            padding: 15px;
+            text-decoration: none;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔥 HAMZA SKU - Handler Setup</h1>
+        
+        <div class="alert" id="alert"></div>
+        
+        <div class="card">
+            <h2 style="color: #00ff88; margin-bottom: 20px;">⚙️ إعدادات Handler</h2>
+            
+            <div class="form-group">
+                <label>LHOST (Your IP)</label>
+                <input type="text" id="host" value="0.0.0.0" placeholder="0.0.0.0">
+            </div>
+            
+            <div class="form-group">
+                <label>LPORT</label>
+                <input type="number" id="port" value="4444" placeholder="4444">
+            </div>
+            
+            <div class="form-group">
+                <label>PAYLOAD</label>
+                <select id="payload">
+                    <option value="android/meterpreter/reverse_tcp">android/meterpreter/reverse_tcp</option>
+                    <option value="android/meterpreter/reverse_http">android/meterpreter/reverse_http</option>
+                    <option value="android/meterpreter/reverse_https">android/meterpreter/reverse_https</option>
+                </select>
+            </div>
+            
+            <button class="btn btn-start" onclick="startHandler()">🚀 START HANDLER</button>
+            <button class="btn btn-stop" onclick="stopHandler()">🛑 STOP HANDLER</button>
+        </div>
+        
+        <div class="card">
+            <h2 style="color: #00ff88; margin-bottom: 20px;">📊 الحالة</h2>
+            <div class="status">
+                <div class="status-line">
+                    <span>Handler:</span>
+                    <span id="status-handler" style="color: #ff0055;">STOPPED</span>
+                </div>
+                <div class="status-line">
+                    <span>Metasploit RPC:</span>
+                    <span id="status-msf" style="color: #ff0055;">DISCONNECTED</span>
+                </div>
+            </div>
+            
+            <a href="/dashboard" class="btn-dashboard">📊 GO TO DASHBOARD</a>
+        </div>
+    </div>
+
+    <script>
+        async function startHandler() {
+            const host = document.getElementById('host').value;
+            const port = document.getElementById('port').value;
+            const payload = document.getElementById('payload').value;
+            
+            showAlert('⏳ Starting handler...', 'success');
+            
+            try {
+                const res = await fetch('/api/handler/start', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({host, port, payload})
+                });
+                const data = await res.json();
+                
+                if (data.success) {
+                    showAlert('✅ ' + data.message, 'success');
+                    updateStatus();
+                } else {
+                    showAlert('❌ ' + data.message, 'error');
+                }
+            } catch (e) {
+                showAlert('❌ Error: ' + e, 'error');
+            }
+        }
+        
+        async function stopHandler() {
+            showAlert('⏳ Stopping handler...', 'success');
+            
+            try {
+                const res = await fetch('/api/handler/stop', {method: 'POST'});
+                const data = await res.json();
+                
+                if (data.success) {
+                    showAlert('⚠️ ' + data.message, 'success');
+                    updateStatus();
+                } else {
+                    showAlert('❌ ' + data.message, 'error');
+                }
+            } catch (e) {
+                showAlert('❌ Error: ' + e, 'error');
+            }
+        }
+        
+        async function updateStatus() {
+            try {
+                const res = await fetch('/api/handler/status');
+                const data = await res.json();
+                
+                document.getElementById('status-handler').textContent = data.active ? 'RUNNING' : 'STOPPED';
+                document.getElementById('status-handler').style.color = data.active ? '#00ff88' : '#ff0055';
+                
+                document.getElementById('status-msf').textContent = data.msf_connected ? 'CONNECTED' : 'DISCONNECTED';
+                document.getElementById('status-msf').style.color = data.msf_connected ? '#00ff88' : '#ff0055';
+            } catch (e) {
+                console.error('Status update failed:', e);
+            }
+        }
+        
+        function showAlert(message, type) {
+            const alert = document.getElementById('alert');
+            alert.className = 'alert alert-' + type + ' show';
+            alert.textContent = message;
+            setTimeout(() => alert.classList.remove('show'), 5000);
+        }
+        
+        // Update status every 3 seconds
+        setInterval(updateStatus, 3000);
+        updateStatus();
+    </script>
+</body>
+</html>
