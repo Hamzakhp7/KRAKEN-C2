@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HAMZA SKU - Login</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a0e1a, #1a1e2e);
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #e0e6ed;
+        }
+        .login-box {
+            background: rgba(20, 24, 36, 0.95);
+            border: 2px solid rgba(0, 255, 136, 0.3);
+            border-radius: 20px;
+            padding: 50px;
+            width: 400px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+        h1 {
+            text-align: center;
+            color: #00ff88;
+            font-size: 32px;
+            margin-bottom: 30px;
+            text-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
+        }
+        input {
+            width: 100%;
+            padding: 15px;
+            margin: 10px 0;
+            background: rgba(10, 14, 26, 0.8);
+            border: 2px solid rgba(0, 255, 136, 0.3);
+            border-radius: 10px;
+            color: #e0e6ed;
+            font-size: 16px;
+        }
+        input:focus {
+            outline: none;
+            border-color: #00ff88;
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
+        }
+        button {
+            width: 100%;
+            padding: 15px;
+            margin-top: 20px;
+            background: linear-gradient(135deg, #00ff88, #00cc66);
+            border: none;
+            border-radius: 10px;
+            color: #0a0e1a;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0, 255, 136, 0.4);
+        }
+        .error {
+            color: #ff0055;
+            text-align: center;
+            margin-top: 10px;
+            display: none;
+        }
+        .error.show { display: block; }
+    </style>
+</head>
+<body>
+    <div class="login-box">
+        <h1>🔥 HAMZA SKU</h1>
+        <input type="password" id="password" placeholder="كلمة المرور">
+        <button onclick="login()">دخول</button>
+        <div class="error" id="error">كلمة مرور خاطئة!</div>
+    </div>
+
+    <script>
+        async function login() {
+            const pwd = document.getElementById('password').value;
+            const res = await fetch('/login', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({password: pwd})
+            });
+            const data = await res.json();
+            
+            if (data.success) {
+                window.location.href = '/';
+            } else {
+                document.getElementById('error').classList.add('show');
+                setTimeout(() => {
+                    document.getElementById('error').classList.remove('show');
+                }, 3000);
+            }
+        }
+        
+        document.getElementById('password').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') login();
+        });
+    </script>
+</body>
+</html>
